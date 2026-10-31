@@ -1,0 +1,42 @@
+
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+contract SimpleStorage {
+
+    // Declare an integer variable
+    uint public value;
+
+    // Function to increment the value
+    function increment() public {
+        value = value + 1;
+    }
+
+    // Function to decrement the value
+    function decrement() public {
+        require(value > 0, "Value cannot be negative");
+        value = value - 1;
+    }
+
+    // Function to read the current value
+    function getValue() public view returns (uint) {
+        return value;
+    }
+}
+
+
+Compiler: Solidity 0.8.37+commit.f401782d.Linux.g++
+
+Contract: SimpleStorage
+
+  Functions:
+    decrement() [nonpayable]
+    getValue() -> uint256 [view]
+    increment() [nonpayable]
+    value() -> uint256 [view]
+
+  Events:
+    (none)
+
+  Bytecode: 678 bytes
+
