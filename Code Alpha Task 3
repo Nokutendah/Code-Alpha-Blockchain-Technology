@@ -1,0 +1,120 @@
+
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+contract PollingSystem {
+
+    // Structure for storing poll details
+    struct Poll {
+        string title;
+        string[] options;
+        uint endTime;
+
+        // Mapping to store votes for each option
+        mapping(uint => uint) voteCount;
+
+        // Mapping to prevent double voting
+        mapping(address => bool) hasVoted;
+    }
+
+    // Store all polls
+    mapping(uint => Poll) private polls;
+
+    uint public pollCount = 0;
+
+    // Function to create a new poll
+    function createPoll(
+        string memory _title,
+        string[] memory _options,
+        uint _endTime
+    ) public {
+
+        require(_options.length >= 2, "At least two options required");
+        require(_endTime > block.timestamp, "Invalid deadline");
+
+        Poll storage newPoll = polls[pollCount];
+
+        newPoll.title = _title;
+        newPoll.endTime = _endTime;
+
+        // Store poll options
+        for (uint i = 0; i < _options.length; i++) {
+            newPoll.options.push(_options[i]);
+        }
+
+        pollCount++;
+    }
+
+    // Function to cast a vote
+    function vote(uint _pollId, uint _optionIndex) public {
+
+        require(_pollId < pollCount, "Poll does not exist");
+
+        Poll storage p = polls[_pollId];
+
+        require(block.timestamp < p.endTime, "Voting period ended");
+        require(!p.hasVoted[msg.sender], "Already voted");
+        require(_optionIndex < p.options.length, "Invalid option");
+
+        // Mark address as having voted
+        p.hasVoted[msg.sender] = true;
+
+        // Increase vote count
+        p.voteCount[_optionIndex]++;
+    }
+
+    // Function to determine the winning option
+    function getWinner(uint _pollId)
+        public
+        view
+        returns (string memory, uint)
+    {
+        require(_pollId < pollCount, "Poll does not exist");
+
+        Poll storage p = polls[_pollId];
+
+        require(block.timestamp >= p.endTime, "Poll is still active");
+
+        uint maxVotes = 0;
+        uint winnerIndex = 0;
+
+        // Find the option with the highest votes
+        for (uint i = 0; i < p.options.length; i++) {
+
+            if (p.voteCount[i] > maxVotes) {
+                maxVotes = p.voteCount[i];
+                winnerIndex = i;
+            }
+        }
+
+        require(maxVotes > 0, "No votes cast");
+
+        return (p.options[winnerIndex], maxVotes);
+    }
+
+    // Function to view poll details
+    function getPoll(uint _pollId)
+        public
+        view
+        returns (string memory, string[] memory, uint)
+    {
+        require(_pollId < pollCount, "Poll does not exist");
+
+        Poll storage p = polls[_pollId];
+
+        return (p.title, p.options, p.endTime);
+    }
+
+    // Function to view vote count for an option
+    function getVoteCount(uint _pollId, uint _optionIndex)
+        public
+        view
+        returns (uint)
+    {
+        require(_pollId < pollCount, "Poll does not exist");
+
+        return polls[_pollId].voteCount[_optionIndex];
+    }
+}
+
+
